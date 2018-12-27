@@ -88,22 +88,6 @@ class TodosController {
   // come back to this one, need to get delete working first
   updateTodo(req, res) {
     const id = parseInt(req.params.id, 10);
-    let todoFound;
-    let itemIndex;
-    db.map((todo, index) => {
-      if (todo.id === id) {
-        todoFound = todo;
-        itemIndex = index;
-      }
-    });
-
-    if (!todoFound) {
-      return res.status(404).send({
-        success: 'false',
-        message: 'todo not found',
-      });
-    }
-
     if (!req.body.title) {
       return res.status(400).send({
         success: 'false',
@@ -114,21 +98,22 @@ class TodosController {
         success: 'false',
         message: 'description is required',
       });
+    } else {
+      const updatedTodo = {
+        id: id,
+        title: req.body.title,
+        description: req.body.description
+      }
+      const sqlString =
+        `UPDATE todo 
+          SET title = "${req.body.title}", description = "${req.body.description}"
+          WHERE todoId = ${id}`
+
+      db.run(sqlString)
+      return res.json({
+        updatedTodo
+      });
     }
-
-    const newTodo = {
-      id: todoFound.id,
-      title: req.body.title || todoFound.title,
-      description: req.body.description || todoFound.description,
-    };
-
-    db.splice(itemIndex, 1, newTodo);
-
-    return res.status(201).send({
-      success: 'true',
-      message: 'todo added successfully',
-      newTodo,
-    });
   }
 
   deleteTodo(req, res) {
